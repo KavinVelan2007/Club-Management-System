@@ -1,0 +1,543 @@
+:root {
+    --white: hsl(0, 0%, 100%);
+    --purple-primary: rgba(132, 0, 255, 1);
+    --purple-glow: rgba(132, 0, 255, 0.22);
+    --purple-border: rgba(132, 0, 255, 0.8);
+    --border-color: #30283a;
+    --background-dark: #120f17;
+}
+
+
+/* =========================
+   GRID
+========================= */
+
+.card-grid {
+    display: grid;
+    gap: 14px;
+    padding: 0;
+    max-width: 100%;
+    font-size: 1rem;
+}
+
+
+/* =========================
+   CARD
+========================= */
+
+.magic-bento-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    position: relative;
+
+    min-height: 205px;
+    width: 100%;
+
+    padding: 24px;
+
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+
+    background: var(--background-dark);
+
+    font-weight: 300;
+
+    overflow: hidden;
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+
+    --glow-x: 50%;
+    --glow-y: 50%;
+    --glow-intensity: 0;
+    --glow-radius: 200px;
+}
+
+.magic-bento-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.2),
+        0 0 25px rgba(132, 0, 255, 0.12);
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.magic-bento-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    position: relative;
+    z-index: 3;
+}
+
+.magic-bento-card__label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.magic-bento-icon {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: rgba(132, 0, 255, 0.12);
+    border: 1px solid rgba(132, 0, 255, 0.25);
+
+    color: #c9a5ff;
+
+    transition: 0.3s ease;
+}
+
+.magic-bento-card:hover .magic-bento-icon {
+    background: rgba(132, 0, 255, 0.22);
+    border-color: rgba(132, 0, 255, 0.5);
+    color: #ffffff;
+}
+
+
+/* =========================
+   CONTENT
+========================= */
+
+.magic-bento-card__content {
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+    z-index: 3;
+}
+
+.magic-bento-main {
+    position: relative;
+}
+
+.magic-bento-value {
+    margin-bottom: 4px;
+
+    font-size: 42px;
+    line-height: 1;
+
+    font-weight: 600;
+    letter-spacing: -2px;
+
+    color: #ffffff;
+}
+
+.magic-bento-card__title {
+    margin: 0 0 5px;
+
+    font-size: 17px;
+    line-height: 1.2;
+
+    font-weight: 500;
+
+    color: #ffffff;
+}
+
+.magic-bento-card__description {
+    margin: 0;
+
+    font-size: 12px;
+    line-height: 1.5;
+
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.card-meta {
+    margin-top: 15px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.4);
+}
+
+
+/* =========================
+   TASK PROGRESS
+========================= */
+
+.task-progress {
+    margin-top: 28px;
+}
+
+.task-progress-track {
+    width: 100%;
+    height: 7px;
+
+    overflow: hidden;
+
+    border-radius: 100px;
+
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.task-progress-fill {
+    height: 100%;
+
+    border-radius: inherit;
+
+    background: linear-gradient(
+        90deg,
+        #7c22ff,
+        #b66cff
+    );
+
+    box-shadow:
+        0 0 15px rgba(132, 0, 255, 0.7);
+}
+
+.task-progress span {
+    display: block;
+
+    margin-top: 9px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.45);
+}
+
+
+/* =========================
+   EVENTS
+========================= */
+
+.event-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    margin-top: 18px;
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.event-preview strong {
+    font-size: 12px;
+    font-weight: 500;
+
+    color: #ffffff;
+}
+
+.event-preview span {
+    font-size: 10px;
+
+    color: rgba(255, 255, 255, 0.45);
+}
+
+
+/* =========================
+   ANNOUNCEMENTS
+========================= */
+
+.announcement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+
+    margin-top: 20px;
+}
+
+.announcement-list div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.announcement-dot {
+    width: 6px;
+    height: 6px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #a855f7;
+
+    box-shadow:
+        0 0 8px rgba(168, 85, 247, 0.8);
+}
+
+
+/* =========================
+   ACTIVITY
+========================= */
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+.activity-list div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.activity-list span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: rgba(132, 0, 255, 0.15);
+
+    color: #b987ff;
+
+    font-size: 10px;
+}
+
+
+/* =========================
+   CLUB PULSE
+========================= */
+
+.pulse-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 18px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.pulse-arrow {
+    font-size: 18px;
+    color: #b987ff;
+}
+
+
+/* =========================
+   DESKTOP BENTO LAYOUT
+========================= */
+
+@media (min-width: 1024px) {
+
+    .card-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /*
+        3 = Task Progress
+        Makes the main feature card large.
+    */
+
+    .magic-bento-card:nth-child(3) {
+        grid-column: span 2;
+        grid-row: span 2;
+    }
+
+    /*
+        4 = Announcements
+        Large supporting card.
+    */
+
+    .magic-bento-card:nth-child(4) {
+        grid-column: 1 / span 2;
+        grid-row: 3 / span 2;
+    }
+
+    .magic-bento-card:nth-child(3),
+    .magic-bento-card:nth-child(4) {
+        min-height: 230px;
+    }
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (min-width: 600px) and (max-width: 1023px) {
+
+    .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .magic-bento-card {
+        min-height: 210px;
+    }
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 599px) {
+
+    .card-grid {
+        grid-template-columns: 1fr;
+
+        width: 100%;
+        margin: 0;
+    }
+
+    .magic-bento-card {
+        width: 100%;
+        min-height: 190px;
+    }
+
+}
+
+
+/* =========================
+   BORDER GLOW
+========================= */
+
+.magic-bento-card--border-glow::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    padding: 5px;
+
+    background: radial-gradient(
+        var(--glow-radius) circle at
+            var(--glow-x) var(--glow-y),
+        rgba(
+            132,
+            0,
+            255,
+            calc(var(--glow-intensity) * 0.8)
+        )
+            0%,
+        rgba(
+            132,
+            0,
+            255,
+            calc(var(--glow-intensity) * 0.4)
+        )
+            30%,
+        transparent 60%
+    );
+
+    border-radius: inherit;
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0)
+            content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite: xor;
+
+    mask:
+        linear-gradient(#fff 0 0)
+            content-box,
+        linear-gradient(#fff 0 0);
+
+    mask-composite: exclude;
+
+    pointer-events: none;
+
+    opacity: 1;
+
+    z-index: 1;
+}
+
+
+/* =========================
+   PARTICLES
+========================= */
+
+.particle-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.particle::before {
+    content: "";
+
+    position: absolute;
+
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+
+    background: rgba(
+        132,
+        0,
+        255,
+        0.2
+    );
+
+    border-radius: 50%;
+
+    z-index: -1;
+}
+
+.particle-container:hover {
+    box-shadow:
+        0 8px 25px rgba(46, 24, 78, 0.35),
+        0 0 30px var(--purple-glow);
+}
+
+
+/* =========================
+   SPOTLIGHT
+========================= */
+
+.global-spotlight {
+    mix-blend-mode: screen;
+
+    will-change:
+        transform,
+        opacity;
+
+    z-index: 200 !important;
+
+    pointer-events: none;
+}
+
+
+/* =========================
+   SECTION
+========================= */
+
+.bento-section {
+    position: relative;
+    user-select: none;
+}
