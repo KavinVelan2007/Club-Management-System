@@ -11,9 +11,8 @@ from .views import (
 
 urlpatterns = [
     path('', event_list),
-    path('<str:event_id>/', event_detail),
-
     path('departments/', event_department_list),
     path('registrations/', registration_list),
     path('attendance/', attendance_list),
+    path('<str:event_id>/', event_detail),
 ]

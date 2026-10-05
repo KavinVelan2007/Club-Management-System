@@ -7,13 +7,17 @@ from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from authentication.models import Student, Faculty
+from clubs.models import Club
+from authorization import membership_permissions
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
 
@@ -47,6 +51,7 @@ class LoginView(APIView):
                     )
 
             username = f"student_{student.student_id}"
+            profile = student
 
         # ---------------- FACULTY ----------------
 
@@ -68,6 +73,7 @@ class LoginView(APIView):
                     )
 
             username = f"faculty_{faculty.faculty_id}"
+            profile = faculty
 
         else:
             return Response(
@@ -90,10 +96,22 @@ class LoginView(APIView):
         # Generate JWT
         refresh = RefreshToken.for_user(user)
 
+        if role == "faculty":
+            managed_club_ids = list(Club.objects.filter(faculty_id=profile.pk).values_list("club_id", flat=True))
+        else:
+            managed_club_ids = [
+                membership.club_id
+                for membership in profile.membership_set.filter(status="ACTIVE").select_related("role")
+                if "P010" in membership_permissions(profile.pk, membership.club_id)
+            ]
+
         return Response({
             "message": "Login successful",
             "access": str(refresh.access_token),
             "refresh": str(refresh),
             "role": role,
-            "user_id": identifier
+            "user_id": profile.pk,
+            "name": profile.name,
+            "email": profile.email,
+            "managed_club_ids": managed_club_ids,
         })

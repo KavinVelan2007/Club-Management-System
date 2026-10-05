@@ -9,11 +9,13 @@ from .models import (
 
 
 class EventSerializer(serializers.ModelSerializer):
+    club_name = serializers.CharField(source='club.club_name', read_only=True)
     class Meta:
         model = Event
         fields = [
             'event_id',
             'club_id',
+            'club_name',
             'event_name',
             'description',
             'event_date',

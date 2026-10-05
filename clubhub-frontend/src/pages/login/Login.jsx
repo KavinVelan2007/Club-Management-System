@@ -13,6 +13,7 @@ import BorderGlow from "../../components/BorderGlow/BorderGlow";
 import TextType from "../../components/TextType/TextType";
 import SpecularButton from "../../components/SpecularButton/SpecularButton";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 import "./Login.css";
 
@@ -25,6 +26,7 @@ function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { signIn } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -39,10 +41,7 @@ function Login() {
                 role
             );
 
-            localStorage.setItem("accessToken", data.access);
-            localStorage.setItem("refreshToken", data.refresh);
-            localStorage.setItem("role", data.role);
-            localStorage.setItem("userId", data.user_id);
+            signIn(data, keepSignedIn);
 
             navigate("/dashboard");
         } catch (err) {

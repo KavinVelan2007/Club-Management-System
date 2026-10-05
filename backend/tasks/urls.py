@@ -10,8 +10,7 @@ from .views import (
 
 urlpatterns = [
     path('', task_list),
-    path('<str:task_id>/', task_detail),
-
     path('assignments/', task_assignment_list),
     path('submissions/', task_submission_list),
+    path('<str:task_id>/', task_detail),
 ]

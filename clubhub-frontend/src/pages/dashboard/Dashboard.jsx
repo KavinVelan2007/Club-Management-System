@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
@@ -21,20 +22,49 @@ import {
 import CRTWarp from "../../components/CRTWarp/CRTWarp";
 import GlassSurface from "../../components/GlassSurface/GlassSurface";
 import GradualBlur from "../../components/GradualBlur/GradualBlur";
+import { useAuth } from "../../context/AuthContext";
+import { clubService } from "../../services/clubService";
+import { eventService } from "../../services/eventService";
+import { taskService } from "../../services/taskService";
+import { announcementService } from "../../services/announcementService";
 
 import "./Dashboard.css";
 
 function Dashboard() {
     const navigate = useNavigate();
+    const { user, signOut } = useAuth();
+    const [summary, setSummary] = useState({ clubs: 0, upcoming: 0, completion: 0, announcements: 0 });
 
-    const userRole = localStorage.getItem("role") || "Student";
+    const loadSummary = useCallback(async () => {
+        try {
+            const [clubs, memberships] = await Promise.all([
+                clubService.getClubs(),
+                user.role === "student" ? clubService.getMemberships(`?student=${encodeURIComponent(user.userId)}`) : Promise.resolve([]),
+            ]);
+            const visibleClubs = user.role === "student"
+                ? clubs.filter((club) => memberships.some((item) => item.club_id === club.club_id))
+                : clubs.filter((club) => club.faculty_id === user.userId);
+            const ids = visibleClubs.map((club) => club.club_id);
+            const [eventLists, taskLists, announcementLists] = await Promise.all([
+                Promise.all(ids.map((id) => eventService.getEvents(`?club=${encodeURIComponent(id)}`))),
+                user.role === "student" ? Promise.resolve([await taskService.getTasks(`?student=${encodeURIComponent(user.userId)}`)]) : Promise.all(ids.map((id) => taskService.getTasks(`?club=${encodeURIComponent(id)}`))),
+                Promise.all(ids.map((id) => announcementService.getAnnouncements(`?club=${encodeURIComponent(id)}`))),
+            ]);
+            const tasks = taskLists.flat();
+            const completed = tasks.filter((task) => task.status?.toLowerCase().includes("complete")).length;
+            setSummary({ clubs: visibleClubs.length, upcoming: eventLists.flat().filter((event) => new Date(event.event_date) >= new Date()).length, completion: tasks.length ? Math.round((completed / tasks.length) * 100) : 0, announcements: announcementLists.flat().length });
+        } catch {
+            // The individual pages present detailed API errors; the dashboard remains usable with zero-value summaries.
+        }
+    }, [user.role, user.userId]);
+
+    useEffect(() => { loadSummary(); }, [loadSummary]);
+    const userRole = user.role === "faculty" ? "Faculty" : "Student";
+    const userName = user.name || "ClubHub user";
+    const userInitial = userName.charAt(0).toUpperCase();
 
     const handleLogout = () => {
-        localStorage.removeItem("access");
-        localStorage.removeItem("refresh");
-        localStorage.removeItem("role");
-        localStorage.removeItem("user_id");
-
+        signOut();
         navigate("/");
     };
 
@@ -114,22 +144,27 @@ function Dashboard() {
                                 <span>Dashboard</span>
                             </button>
 
-                            <button className="nav-item">
+                            <button className="nav-item" onClick={() => navigate("/clubs")}>
                                 <Users size={18} />
                                 <span>My Clubs</span>
                             </button>
 
-                            <button className="nav-item">
+                            <button className="nav-item" onClick={() => navigate("/members")}>
+                                <Users size={18} />
+                                <span>Members</span>
+                            </button>
+
+                            <button className="nav-item" onClick={() => navigate("/events")}>
                                 <CalendarDays size={18} />
                                 <span>Events</span>
                             </button>
 
-                            <button className="nav-item">
+                            <button className="nav-item" onClick={() => navigate("/tasks")}>
                                 <CheckSquare size={18} />
                                 <span>Tasks</span>
                             </button>
 
-                            <button className="nav-item">
+                            <button className="nav-item" onClick={() => navigate("/announcements")}>
                                 <Megaphone size={18} />
                                 <span>Announcements</span>
                             </button>
@@ -138,7 +173,7 @@ function Dashboard() {
                                 System
                             </div>
 
-                            <button className="nav-item">
+                            <button className="nav-item" onClick={() => navigate("/settings")}>
                                 <Settings size={18} />
                                 <span>Settings</span>
                             </button>
@@ -152,12 +187,12 @@ function Dashboard() {
                             <div className="mini-user">
 
                                 <div className="mini-avatar">
-                                    S
+                                    {userInitial}
                                 </div>
 
                                 <div className="mini-user-info">
                                     <strong>
-                                        Student
+                                        {userName}
                                     </strong>
 
                                     <span>
@@ -217,17 +252,17 @@ function Dashboard() {
                         <div className="profile">
 
                             <div className="profile-avatar">
-                                S
+                                    {userInitial}
                             </div>
 
                             <div className="profile-info">
 
                                 <strong>
-                                    Student
+                                    {userName}
                                 </strong>
 
                                 <span>
-                                    Club Member
+                                    {userRole}
                                 </span>
 
                             </div>
@@ -267,7 +302,7 @@ function Dashboard() {
 
                         </div>
 
-                        <button className="quick-action">
+                        <button className="quick-action" onClick={() => navigate("/clubs")}>
 
                             <span>
                                 Explore clubs
@@ -310,7 +345,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    03
+                                    {String(summary.clubs).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -356,7 +391,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    02
+                                    {String(summary.upcoming).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -402,7 +437,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    68
+                                    {summary.completion}
                                     <span className="percentage">
                                         %
                                     </span>
@@ -411,7 +446,7 @@ function Dashboard() {
                                 <div className="stat-footer">
 
                                     <span className="stat-positive">
-                                        +12%
+                                    {summary.completion}%
                                     </span>
 
                                     <span>
@@ -451,7 +486,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    03
+                                    {String(summary.announcements).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -504,7 +539,7 @@ function Dashboard() {
 
                                     </div>
 
-                                    <button className="panel-link">
+                                    <button className="panel-link" onClick={() => navigate("/events")}>
                                         View all
                                         <ArrowUpRight size={15} />
                                     </button>
@@ -636,7 +671,7 @@ function Dashboard() {
 
                                     </div>
 
-                                    <button className="panel-link">
+                                    <button className="panel-link" onClick={() => navigate("/announcements")}>
                                         View all
                                         <ArrowUpRight size={15} />
                                     </button>
@@ -753,7 +788,7 @@ function Dashboard() {
 
                                     </div>
 
-                                    <button className="panel-link">
+                                    <button className="panel-link" onClick={() => navigate("/tasks")}>
                                         Open tasks
                                         <ArrowUpRight size={15} />
                                     </button>

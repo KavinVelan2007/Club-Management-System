@@ -5,7 +5,9 @@ import './GlassSurface.css';
 const GlassSurface = ({
   children,
   width = 200,
-  height = 80,
+  // Content cards should grow with their contents. Components that need a
+  // fixed surface (for example the dashboard sidebar) pass height explicitly.
+  height = 'auto',
   borderRadius = 20,
   borderWidth = 0.07,
   brightness = 50,
