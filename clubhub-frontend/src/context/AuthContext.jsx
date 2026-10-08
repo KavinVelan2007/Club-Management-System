@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { clearSession } from "../services/apiClient";
+import { authService } from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -14,20 +15,51 @@ function readUser() {
         role: get("role"),
         userId: get("userId"),
         name: get("userName"),
+        email: get("userEmail"),
     };
 }
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(readUser);
+    const [profile, setProfile] = useState(null);
 
     useEffect(() => {
-        const expireSession = () => setUser(null);
+        const expireSession = () => {
+            setUser(null);
+            setProfile(null);
+        };
         window.addEventListener("clubhub:session-expired", expireSession);
         return () => window.removeEventListener("clubhub:session-expired", expireSession);
     }, []);
 
+    // Load the role/permission snapshot from the backend for the signed-in user.
+    useEffect(() => {
+        let cancelled = false;
+        if (!user) {
+            setProfile(null);
+            return undefined;
+        }
+        authService.getMe()
+            .then((data) => { if (!cancelled) setProfile(data); })
+            .catch(() => { if (!cancelled) setProfile(null); });
+        return () => { cancelled = true; };
+    }, [user?.accessToken, user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const reloadProfile = useCallback(async () => {
+        try {
+            const data = await authService.getMe();
+            setProfile(data);
+            return data;
+        } catch {
+            return null;
+        }
+    }, []);
+
     const value = useMemo(() => ({
         user,
+        profile,
+        reloadProfile,
+        isManagerOf: (clubId) => Boolean(profile?.managed_club_ids?.includes(clubId)),
         signIn: (data, keepSignedIn = false) => {
             clearSession();
             const store = keepSignedIn ? localStorage : sessionStorage;
@@ -36,13 +68,16 @@ export function AuthProvider({ children }) {
             store.setItem("role", data.role);
             store.setItem("userId", data.user_id);
             store.setItem("userName", data.name || "ClubHub user");
+            store.setItem("userEmail", data.email || "");
+            setProfile(null);
             setUser(readUser());
         },
         signOut: () => {
             clearSession();
+            setProfile(null);
             setUser(null);
         },
-    }), [user]);
+    }), [user, profile, reloadProfile]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

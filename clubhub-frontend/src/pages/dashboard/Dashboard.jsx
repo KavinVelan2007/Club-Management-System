@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
@@ -8,58 +8,66 @@ import {
     Megaphone,
     Settings,
     LogOut,
-    Bell,
     Search,
     ArrowUpRight,
-    Clock3,
     CheckCircle2,
     Circle,
-    ChevronRight,
     Activity,
+    Clock3,
     ShieldCheck,
+    AlertTriangle,
 } from "lucide-react";
 
 import CRTWarp from "../../components/CRTWarp/CRTWarp";
 import GlassSurface from "../../components/GlassSurface/GlassSurface";
 import GradualBlur from "../../components/GradualBlur/GradualBlur";
+import NotificationBell from "../../components/layout/NotificationBell";
+import ProfileMenu from "../../components/layout/ProfileMenu";
+import PageState from "../../components/ui/PageState";
 import { useAuth } from "../../context/AuthContext";
-import { clubService } from "../../services/clubService";
-import { eventService } from "../../services/eventService";
-import { taskService } from "../../services/taskService";
-import { announcementService } from "../../services/announcementService";
+import { authService } from "../../services/authService";
+import { formatDate, formatRelative } from "../../utils/time";
 
 import "./Dashboard.css";
 
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+const DOTS = ["purple-dot", "blue-dot", "green-dot", "orange-dot"];
+
+function eventDateParts(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return { month: MONTHS[date.getMonth()], day: String(date.getDate()).padStart(2, "0") };
+}
+
 function Dashboard() {
     const navigate = useNavigate();
-    const { user, signOut } = useAuth();
-    const [summary, setSummary] = useState({ clubs: 0, upcoming: 0, completion: 0, announcements: 0 });
+    const { user, profile, signOut } = useAuth();
+    const [summary, setSummary] = useState(null);
+    const [loadError, setLoadError] = useState("");
+    const [search, setSearch] = useState("");
 
     const loadSummary = useCallback(async () => {
         try {
-            const [clubs, memberships] = await Promise.all([
-                clubService.getClubs(),
-                user.role === "student" ? clubService.getMemberships(`?student=${encodeURIComponent(user.userId)}`) : Promise.resolve([]),
-            ]);
-            const visibleClubs = user.role === "student"
-                ? clubs.filter((club) => memberships.some((item) => item.club_id === club.club_id))
-                : clubs.filter((club) => club.faculty_id === user.userId);
-            const ids = visibleClubs.map((club) => club.club_id);
-            const [eventLists, taskLists, announcementLists] = await Promise.all([
-                Promise.all(ids.map((id) => eventService.getEvents(`?club=${encodeURIComponent(id)}`))),
-                user.role === "student" ? Promise.resolve([await taskService.getTasks(`?student=${encodeURIComponent(user.userId)}`)]) : Promise.all(ids.map((id) => taskService.getTasks(`?club=${encodeURIComponent(id)}`))),
-                Promise.all(ids.map((id) => announcementService.getAnnouncements(`?club=${encodeURIComponent(id)}`))),
-            ]);
-            const tasks = taskLists.flat();
-            const completed = tasks.filter((task) => task.status?.toLowerCase().includes("complete")).length;
-            setSummary({ clubs: visibleClubs.length, upcoming: eventLists.flat().filter((event) => new Date(event.event_date) >= new Date()).length, completion: tasks.length ? Math.round((completed / tasks.length) * 100) : 0, announcements: announcementLists.flat().length });
-        } catch {
-            // The individual pages present detailed API errors; the dashboard remains usable with zero-value summaries.
+            setSummary(await authService.getDashboard());
+            setLoadError("");
+        } catch (loadErr) {
+            setLoadError(loadErr.message);
         }
-    }, [user.role, user.userId]);
+    }, []);
 
     useEffect(() => { loadSummary(); }, [loadSummary]);
-    const userRole = user.role === "faculty" ? "Faculty" : "Student";
+
+    const roleLabel = profile?.role_label || summary?.role_label || (user.role === "faculty" ? "Faculty coordinator" : "Club member");
+    const stats = summary?.stats || { clubs: 0, members: 0, upcoming_events: 0, open_tasks: 0, announcements: 0 };
+    const progress = summary?.progress || { completed: 0, total: 0, percent: 0 };
+    const upcomingEvents = summary?.upcoming_events || [];
+    const recentAnnouncements = summary?.recent_announcements || [];
+    const focusTasks = summary?.focus_tasks || [];
+    const clubsSummary = summary?.clubs_summary || [];
+    const isManager = (profile?.managed_club_ids?.length || 0) > 0;
+    const pendingMembers = stats.pending_members || 0;
+
     const userName = user.name || "ClubHub user";
     const userInitial = userName.charAt(0).toUpperCase();
 
@@ -196,7 +204,7 @@ function Dashboard() {
                                     </strong>
 
                                     <span>
-                                        {userRole}
+                                        {roleLabel}
                                     </span>
                                 </div>
 
@@ -233,46 +241,19 @@ function Dashboard() {
                         <input
                             type="text"
                             placeholder="Search clubs, events, tasks..."
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
                         />
 
                     </div>
 
                     <div className="topbar-actions">
 
-                        <button className="icon-button">
-
-                            <Bell size={19} />
-
-                            <span className="notification-dot" />
-
-                        </button>
+                        <NotificationBell />
 
                         <div className="topbar-divider" />
 
-                        <div className="profile">
-
-                            <div className="profile-avatar">
-                                    {userInitial}
-                            </div>
-
-                            <div className="profile-info">
-
-                                <strong>
-                                    {userName}
-                                </strong>
-
-                                <span>
-                                    {userRole}
-                                </span>
-
-                            </div>
-
-                            <ChevronRight
-                                size={16}
-                                className="profile-arrow"
-                            />
-
-                        </div>
+                        <ProfileMenu />
 
                     </div>
 
@@ -282,6 +263,29 @@ function Dashboard() {
 
                 <div className="dashboard-content">
 
+                    {!summary && !loadError ? (
+                        <PageState
+                            type="loading"
+                            title="Loading your dashboard"
+                            message="Fetching your clubs, events, tasks and announcements."
+                        />
+                    ) : loadError && !summary ? (
+                        <PageState
+                            type="error"
+                            title="Dashboard unavailable"
+                            message={loadError}
+                            onRetry={loadSummary}
+                        />
+                    ) : (
+                        <>
+
+                    {loadError && (
+                        <div className="panel-empty">
+                            <AlertTriangle size={14} />
+                            {loadError}
+                        </div>
+                    )}
+
                     {/* Welcome */}
 
                     <section className="welcome-section">
@@ -289,7 +293,7 @@ function Dashboard() {
                         <div>
 
                             <p className="eyebrow">
-                                CLUBHUB / OVERVIEW
+                                CLUBHUB / {roleLabel.toUpperCase()}
                             </p>
 
                             <h1>
@@ -297,7 +301,9 @@ function Dashboard() {
                             </h1>
 
                             <p className="welcome-subtitle">
-                                Here's what's happening across your clubs today.
+                                {isManager
+                                    ? "Here is what needs your attention across the clubs you manage."
+                                    : "Here's what's happening across your clubs today."}
                             </p>
 
                         </div>
@@ -345,7 +351,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    {String(summary.clubs).padStart(2, "0")}
+                                    {String(stats.clubs).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -391,7 +397,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    {String(summary.upcoming).padStart(2, "0")}
+                                    {String(stats.upcoming_events).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -437,7 +443,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    {summary.completion}
+                                    {progress.percent}
                                     <span className="percentage">
                                         %
                                     </span>
@@ -446,12 +452,18 @@ function Dashboard() {
                                 <div className="stat-footer">
 
                                     <span className="stat-positive">
-                                    {summary.completion}%
+                                    {progress.percent}%
                                     </span>
 
                                     <span>
                                         completion
                                     </span>
+
+                                    {progress.total > 0 && (
+                                        <span>
+                                            {progress.completed} of {progress.total} tasks
+                                        </span>
+                                    )}
 
                                 </div>
 
@@ -486,7 +498,7 @@ function Dashboard() {
                                 </div>
 
                                 <div className="stat-value">
-                                    {String(summary.announcements).padStart(2, "0")}
+                                    {String(stats.announcements).padStart(2, "0")}
                                 </div>
 
                                 <div className="stat-footer">
@@ -503,6 +515,101 @@ function Dashboard() {
 
                             </div>
                         </GlassSurface>
+
+                        {/* Members — managers only */}
+
+                        {isManager && (
+                            <GlassSurface
+                                width="100%"
+                                height="100%"
+                                borderRadius={20}
+                                backgroundOpacity={0.08}
+                                brightness={16}
+                                blur={10}
+                                distortionScale={-70}
+                                className="dashboard-glass"
+                            >
+                                <div className="stat-card">
+
+                                    <div className="stat-top">
+
+                                        <div className="stat-icon blue">
+                                            <Users size={19} />
+                                        </div>
+
+                                        <span className="stat-label">
+                                            MEMBERS
+                                        </span>
+
+                                    </div>
+
+                                    <div className="stat-value">
+                                        {String(stats.members).padStart(2, "0")}
+                                    </div>
+
+                                    <div className="stat-footer">
+
+                                        <span>
+                                            across
+                                        </span>
+
+                                        <span>
+                                            your clubs
+                                        </span>
+
+                                    </div>
+
+                                </div>
+                            </GlassSurface>
+                        )}
+
+                        {/* Pending membership requests — managers only */}
+
+                        {isManager && pendingMembers > 0 && (
+                            <GlassSurface
+                                width="100%"
+                                height="100%"
+                                borderRadius={20}
+                                backgroundOpacity={0.08}
+                                brightness={16}
+                                blur={10}
+                                distortionScale={-70}
+                                className="dashboard-glass"
+                            >
+                                <div className="stat-card">
+
+                                    <div className="stat-top">
+
+                                        <div className="stat-icon orange">
+                                            <AlertTriangle size={19} />
+                                        </div>
+
+                                        <span className="stat-label">
+                                            PENDING
+                                        </span>
+
+                                    </div>
+
+                                    <div className="stat-value">
+                                        {String(pendingMembers).padStart(2, "0")}
+                                    </div>
+
+                                    <div className="stat-footer">
+
+                                        <button
+                                            type="button"
+                                            className="panel-link"
+                                            onClick={() => navigate("/members")}
+                                        >
+                                            Review join requests
+                                            <ArrowUpRight size={15} />
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            </GlassSurface>
+                        )}
 
                     </section>
 
@@ -547,96 +654,46 @@ function Dashboard() {
                                 </div>
 
                                 <div className="events-list">
+                                    {upcomingEvents.length === 0 && (
+                                        <p className="panel-empty">
+                                            No upcoming events scheduled for your clubs.
+                                        </p>
+                                    )}
 
-                                    <div className="event-item">
+                                    {upcomingEvents.map((event) => {
+                                        const parts = eventDateParts(event.event_date);
+                                        return (
+                                            <div className="event-item" key={event.event_id}>
 
-                                        <div className="event-date">
-                                            <span>SEP</span>
-                                            <strong>08</strong>
-                                        </div>
+                                                <div className="event-date">
+                                                    <span>{parts ? parts.month : "â€”"}</span>
+                                                    <strong>{parts ? parts.day : "--"}</strong>
+                                                </div>
 
-                                        <div className="event-info">
+                                                <div className="event-info">
 
-                                            <strong>
-                                                Music Club Jam Session
-                                            </strong>
+                                                    <strong>
+                                                        {event.event_name}
+                                                    </strong>
 
-                                            <span>
-                                                Music Club · 4:00 PM
-                                            </span>
+                                                    <span>
+                                                        {event.club_name}
+                                                        {event.venue ? ` Â· ${event.venue}` : ""}
+                                                    </span>
 
-                                        </div>
+                                                </div>
 
-                                        <div className="event-status">
+                                                <div className="event-status">
 
-                                            <Clock3 size={14} />
+                                                    <Clock3 size={14} />
 
-                                            Tomorrow
+                                                    {formatRelative(event.event_date)}
 
-                                        </div>
+                                                </div>
 
-                                    </div>
-
-
-                                    <div className="event-item">
-
-                                        <div className="event-date">
-                                            <span>SEP</span>
-                                            <strong>11</strong>
-                                        </div>
-
-                                        <div className="event-info">
-
-                                            <strong>
-                                                Short Film Screening
-                                            </strong>
-
-                                            <span>
-                                                Short Film Club · 6:30 PM
-                                            </span>
-
-                                        </div>
-
-                                        <div className="event-status">
-
-                                            <CalendarDays size={14} />
-
-                                            3 days
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="event-item">
-
-                                        <div className="event-date">
-                                            <span>SEP</span>
-                                            <strong>15</strong>
-                                        </div>
-
-                                        <div className="event-info">
-
-                                            <strong>
-                                                Coding Club Meetup
-                                            </strong>
-
-                                            <span>
-                                                Coding Club · 3:00 PM
-                                            </span>
-
-                                        </div>
-
-                                        <div className="event-status">
-
-                                            <CalendarDays size={14} />
-
-                                            1 week
-
-                                        </div>
-
-                                    </div>
-
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
                             </div>
@@ -680,73 +737,30 @@ function Dashboard() {
 
                                 <div className="announcement-list">
 
-                                    <div className="announcement">
+                                    {recentAnnouncements.length === 0 && (
+                                        <p className="panel-empty">
+                                            No announcements yet for your clubs.
+                                        </p>
+                                    )}
 
-                                        <div className="announcement-dot purple-dot" />
+                                    {recentAnnouncements.map((announcement, index) => (
+                                        <div className="announcement" key={announcement.announcement_id}>
+                                            <div className={`announcement-dot ${DOTS[index % DOTS.length]}`} />
+                                            <div>
+                                                <strong>
+                                                    {announcement.title}
+                                                </strong>
 
-                                        <div>
+                                                <p>
+                                                    {announcement.content}
+                                                </p>
 
-                                            <strong>
-                                                Music Club auditions
-                                            </strong>
-
-                                            <p>
-                                                Audition registrations close this Friday.
-                                            </p>
-
-                                            <span>
-                                                2 hours ago
-                                            </span>
-
+                                                <span>
+                                                    {announcement.club_name} Â· {formatRelative(announcement.created_at)}
+                                                </span>
+                                            </div>
                                         </div>
-
-                                    </div>
-
-
-                                    <div className="announcement">
-
-                                        <div className="announcement-dot blue-dot" />
-
-                                        <div>
-
-                                            <strong>
-                                                Film equipment available
-                                            </strong>
-
-                                            <p>
-                                                Camera equipment booking is now open.
-                                            </p>
-
-                                            <span>
-                                                Yesterday
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="announcement">
-
-                                        <div className="announcement-dot green-dot" />
-
-                                        <div>
-
-                                            <strong>
-                                                Club meeting reminder
-                                            </strong>
-
-                                            <p>
-                                                Monthly coordinator meeting tomorrow.
-                                            </p>
-
-                                            <span>
-                                                2 days ago
-                                            </span>
-
-                                        </div>
-
-                                    </div>
+                                    ))}
 
                                 </div>
 
@@ -800,11 +814,11 @@ function Dashboard() {
                                     <div className="progress-heading">
 
                                         <strong>
-                                            Overall progress
+                                            {isManager ? "Club task progress" : "My task progress"}
                                         </strong>
 
                                         <span>
-                                            68%
+                                            {progress.percent}%
                                         </span>
 
                                     </div>
@@ -813,7 +827,7 @@ function Dashboard() {
 
                                         <div
                                             className="progress-fill"
-                                            style={{ width: "68%" }}
+                                            style={{ width: `${progress.percent}%` }}
                                         />
 
                                     </div>
@@ -822,52 +836,37 @@ function Dashboard() {
 
                                 <div className="task-list">
 
-                                    <div className="task-row completed">
+                                    {focusTasks.length === 0 && (
+                                        <p className="panel-empty">
+                                            {isManager
+                                                ? "No open tasks across your clubs. Nice work."
+                                                : "You have no open tasks. Enjoy the quiet."}
+                                        </p>
+                                    )}
 
-                                        <CheckCircle2 size={17} />
+                                    {focusTasks.map((task) => (
+                                        <div
+                                            className={`task-row${task.status === "COMPLETED" ? " completed" : ""}`}
+                                            key={task.task_id}
+                                        >
 
-                                        <span>
-                                            Prepare music club poster
-                                        </span>
+                                            {task.status === "COMPLETED"
+                                                ? <CheckCircle2 size={17} />
+                                                : <Circle size={17} />}
 
-                                        <small>
-                                            Done
-                                        </small>
+                                            <span>
+                                                {task.title}
+                                            </span>
 
-                                    </div>
+                                            <small>
+                                                {task.deadline ? formatDate(task.deadline) : task.status}
+                                                {task.club_name ? ` Â· ${task.club_name}` : ""}
+                                            </small>
 
-
-                                    <div className="task-row">
-
-                                        <Circle size={17} />
-
-                                        <span>
-                                            Edit short film teaser
-                                        </span>
-
-                                        <small>
-                                            Due Sep 10
-                                        </small>
-
-                                    </div>
-
-
-                                    <div className="task-row">
-
-                                        <Circle size={17} />
-
-                                        <span>
-                                            Update event registration
-                                        </span>
-
-                                        <small>
-                                            Due Sep 12
-                                        </small>
-
-                                    </div>
+                                        </div>
+                                    ))}
 
                                 </div>
-
                             </div>
                         </GlassSurface>
 
@@ -891,94 +890,79 @@ function Dashboard() {
                                     <div>
 
                                         <span className="panel-kicker">
-                                            LIVE
+                                            {isManager ? "OVERVIEW" : "LIVE"}
                                         </span>
 
                                         <h2>
-                                            Recent activity
+                                            {isManager ? "Your clubs" : "Recent activity"}
                                         </h2>
 
                                     </div>
 
-                                    <Activity size={18} />
+                                    {isManager
+                                        ? <ShieldCheck size={18} />
+                                        : <Activity size={18} />}
 
                                 </div>
 
                                 <div className="activity-list">
 
-                                    <div className="activity-item">
-
-                                        <div className="activity-icon">
-                                            <CheckCircle2 size={15} />
+                                    {isManager && pendingMembers > 0 && (
+                                        <div className="activity-item">
+                                            <div className="activity-icon">
+                                                <Users size={15} />
+                                            </div>
+                                            <div>
+                                                <strong>
+                                                    {pendingMembers} membership request{pendingMembers === 1 ? "" : "s"} pending
+                                                </strong>
+                                                <span>
+                                                    Review join requests for the clubs you manage
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className="panel-link"
+                                                    onClick={() => navigate("/members")}
+                                                >
+                                                    Review members
+                                                    <ArrowUpRight size={15} />
+                                                </button>
+                                            </div>
                                         </div>
+                                    )}
 
-                                        <div>
+                                    {clubsSummary.length === 0 && (
+                                        <p className="panel-empty">
+                                            You are not a member of any club yet.
+                                        </p>
+                                    )}
 
-                                            <strong>
-                                                Task completed
-                                            </strong>
+                                    {clubsSummary.map((club) => (
+                                        <div className="activity-item" key={club.club_id}>
 
-                                            <span>
-                                                You completed a club task
-                                            </span>
+                                            <div className="activity-icon">
+                                                <Users size={15} />
+                                            </div>
 
-                                            <small>
-                                                20 min ago
-                                            </small>
+                                            <div>
+                                                <strong>
+                                                    {club.club_name}
+                                                </strong>
 
-                                        </div>
+                                                <span>
+                                                    {club.role_name} Â· {club.member_count} member
+                                                    {club.member_count === 1 ? "" : "s"}
+                                                </span>
 
-                                    </div>
-
-
-                                    <div className="activity-item">
-
-                                        <div className="activity-icon">
-                                            <Users size={15} />
-                                        </div>
-
-                                        <div>
-
-                                            <strong>
-                                                Joined Music Club
-                                            </strong>
-
-                                            <span>
-                                                Membership approved
-                                            </span>
-
-                                            <small>
-                                                Yesterday
-                                            </small>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="activity-item">
-
-                                        <div className="activity-icon">
-                                            <ShieldCheck size={15} />
-                                        </div>
-
-                                        <div>
-
-                                            <strong>
-                                                Event registration
-                                            </strong>
-
-                                            <span>
-                                                Registered for Jam Session
-                                            </span>
-
-                                            <small>
-                                                2 days ago
-                                            </small>
+                                                {club.category && (
+                                                    <small>
+                                                        {club.category}
+                                                    </small>
+                                                )}
+                                            </div>
 
                                         </div>
-
-                                    </div>
+                                    ))}
 
                                 </div>
 
@@ -986,6 +970,9 @@ function Dashboard() {
                         </GlassSurface>
 
                     </section>
+
+                        </>
+                    )}
 
                 </div>
 

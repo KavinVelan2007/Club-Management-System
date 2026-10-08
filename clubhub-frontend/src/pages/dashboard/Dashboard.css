@@ -625,6 +625,8 @@
 
 .stat-footer {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 5px;
 
     margin-top: 9px;
@@ -1146,4 +1148,35 @@
     .event-status {
         display: none;
     }
+}
+
+
+/* Empty / informational states inside glass panels */
+
+.panel-empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin: 0;
+    padding: 14px 2px;
+
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.announcement-list .panel-empty,
+.task-list .panel-empty,
+.activity-list .panel-empty {
+    min-height: 40px;
+}
+
+.activity-item .panel-link {
+    margin-top: 8px;
+}
+
+.orange-dot {
+    background: #ff9f43;
+    box-shadow: 0 0 10px rgba(255, 159, 67, 0.5);
 }

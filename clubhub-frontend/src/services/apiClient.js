@@ -12,7 +12,7 @@ function getSessionValue(key) {
 }
 
 function clearSession() {
-    [...Object.values(storageKeys), "role", "userId", "userName"].forEach((key) => sessionStores.forEach((store) => store.removeItem(key)));
+    [...Object.values(storageKeys), "role", "userId", "userName", "userEmail"].forEach((key) => sessionStores.forEach((store) => store.removeItem(key)));
 }
 
 async function refreshAccessToken() {
@@ -40,12 +40,20 @@ async function request(path, options = {}, retryOnUnauthorized = true) {
 
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
-    const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+    let body = options.body;
+    if (body && typeof body !== "string") {
+        headers.set("Content-Type", "application/json");
+        body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${API_URL}${path}`, { ...options, body, headers });
 
     if (response.status === 401 && retryOnUnauthorized) {
         const refreshedToken = await refreshAccessToken();
 
-        if (refreshedToken) return request(path, options, false);
+        if (refreshedToken) {
+            return request(path, { ...options, body }, false);
+        }
 
         clearSession();
         window.dispatchEvent(new Event("clubhub:session-expired"));
@@ -63,6 +71,10 @@ async function request(path, options = {}, retryOnUnauthorized = true) {
 
 export const api = {
     get: (path) => request(path),
+    post: (path, body) => request(path, { method: "POST", body }),
+    patch: (path, body) => request(path, { method: "PATCH", body }),
+    put: (path, body) => request(path, { method: "PUT", body }),
+    del: (path, body) => request(path, { method: "DELETE", body }),
 };
 
 export { API_URL, clearSession };

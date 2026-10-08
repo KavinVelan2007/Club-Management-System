@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'events',
     'tasks',
     'announcements',
+    'notifications',
 
     # REST API
     'rest_framework',
@@ -117,7 +118,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'clubhub',
         'USER': 'root',
-        'PASSWORD': 'ClubHub@1234',
+        'PASSWORD': '159265',
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -211,4 +212,10 @@ CORS_ALLOWED_ORIGINS = [
     # 127.0.0.1 equivalents
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
+
+    # Vite preview server (production build preview)
+    "http://localhost:4173",
+    "http://localhost:4174",
+    "http://127.0.0.1:4173",
+    "http://127.0.0.1:4174",
 ]

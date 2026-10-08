@@ -2,6 +2,8 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { CalendarDays, CheckSquare, LayoutDashboard, LogOut, Megaphone, Settings, Users } from "lucide-react";
 import GlassSurface from "../GlassSurface/GlassSurface";
 import { useAuth } from "../../context/AuthContext";
+import NotificationBell from "./NotificationBell";
+import ProfileMenu from "./ProfileMenu";
 import "./AppShell.css";
 
 const navigation = [
@@ -55,7 +57,16 @@ function AppShell() {
                     </div>
                 </GlassSurface>
             </aside>
-            <main className="app-content"><Outlet /></main>
+            <div className="app-main">
+                <header className="app-topbar">
+                    <span className="app-topbar-tagline">ClubHub workspace</span>
+                    <div className="app-topbar-actions">
+                        <NotificationBell />
+                        <ProfileMenu />
+                    </div>
+                </header>
+                <main className="app-content"><Outlet /></main>
+            </div>
         </div>
     );
 }

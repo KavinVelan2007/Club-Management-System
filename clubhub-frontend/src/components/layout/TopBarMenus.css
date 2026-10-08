@@ -1,0 +1,59 @@
+/* =============== Top bar menus: profile dropdown + notification bell =============== */
+
+.profile-menu, .notification-bell { position: relative; }
+
+.profile-menu-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border: 1px solid #ffffff17; border-radius: 999px; background: #ffffff0a; color: inherit; cursor: pointer; transition: .18s ease; }
+.profile-menu-trigger:hover, .profile-menu-trigger[aria-expanded="true"] { background: #ffffff14; border-color: #ad7cff45; }
+.profile-menu-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 50%; background: linear-gradient(160deg, #8f3dff, #5c14c4); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 0 14px #7c22ff55; }
+.profile-menu-avatar.large { width: 42px; height: 42px; font-size: 16px; }
+.profile-menu-trigger-text { display: grid; gap: 1px; text-align: left; min-width: 0; }
+.profile-menu-trigger-text strong { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: #f4efff; }
+.profile-menu-trigger-text small { color: #a99cbd; font-size: 10.5px; text-transform: capitalize; }
+.profile-menu-chevron { color: #a99cbd; transition: transform .18s ease; }
+.profile-menu-chevron.open { transform: rotate(180deg); }
+
+.profile-menu-popover { position: absolute; top: calc(100% + 10px); right: 0; z-index: 60; width: 285px; padding: 9px; border: 1px solid #ffffff1c; border-radius: 17px; background: rgba(16, 9, 32, .96); box-shadow: 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 1px #7c22ff22 inset; backdrop-filter: blur(18px); }
+.profile-menu-card { display: flex; flex-wrap: wrap; align-items: center; gap: 11px; padding: 12px; border-radius: 13px; background: linear-gradient(150deg, #7c22ff20, #ffffff06); }
+.profile-menu-identity { display: grid; gap: 2px; min-width: 0; }
+.profile-menu-identity strong { font-size: 14px; overflow-wrap: anywhere; }
+.profile-menu-identity span { color: #a99cbd; font-size: 11.5px; overflow-wrap: anywhere; }
+.profile-menu-details { display: grid; gap: 8px; width: 100%; margin: 4px 0 0; }
+.profile-menu-details div { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.profile-menu-details dt { color: #8d81a0; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; }
+.profile-menu-details dd { margin: 0; font-size: 12.5px; font-weight: 700; color: #e5daf7; overflow-wrap: anywhere; }
+.profile-menu-actions { display: grid; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffffff14; }
+.profile-menu-actions button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent; color: #cabcd9; font-size: 13px; font-weight: 650; font-family: inherit; cursor: pointer; text-align: left; }
+.profile-menu-actions button:hover { background: #8f4dff2b; color: #fff; }
+
+.notification-bell-trigger { position: relative; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #ffffff17; border-radius: 50%; background: #ffffff0a; color: #cabcd9; cursor: pointer; transition: .18s ease; }
+.notification-bell-trigger:hover, .notification-bell-trigger[aria-expanded="true"] { background: #ffffff14; color: #fff; border-color: #ad7cff45; }
+.notification-badge { position: absolute; top: -4px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; background: #ff5f57; color: #fff; font-size: 9.5px; font-weight: 800; box-shadow: 0 0 10px #ff5f5788; }
+
+.notification-popover { position: absolute; top: calc(100% + 10px); right: 0; z-index: 60; width: min(370px, calc(100vw - 32px)); border: 1px solid #ffffff1c; border-radius: 17px; background: rgba(16, 9, 32, .97); box-shadow: 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 1px #7c22ff22 inset; backdrop-filter: blur(18px); overflow: hidden; }
+.notification-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 15px; border-bottom: 1px solid #ffffff14; background: linear-gradient(150deg, #7c22ff1f, transparent); }
+.notification-header div { display: grid; gap: 2px; }
+.notification-header strong { font-size: 14px; }
+.notification-header span { color: #a99cbd; font-size: 11px; }
+.notification-header button { border: 0; background: transparent; color: #b48cff; font-size: 11.5px; font-weight: 750; font-family: inherit; cursor: pointer; }
+.notification-header button:hover { color: #d3b8ff; }
+.notification-list { max-height: min(430px, 60vh); overflow-y: auto; padding: 7px; display: grid; gap: 3px; }
+.notification-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 26px 16px; color: #a99cbd; font-size: 12.5px; text-align: center; line-height: 1.55; }
+.notification-empty button { border: 1px solid #ad7cff4d; background: #7c22ff24; color: #d3b8ff; border-radius: 9px; padding: 7px 13px; font-size: 12px; font-family: inherit; cursor: pointer; }
+.notification-item { display: flex; align-items: flex-start; gap: 11px; width: 100%; padding: 11px 12px; border: 0; border-radius: 12px; background: transparent; color: inherit; font-family: inherit; text-align: left; cursor: pointer; transition: background .15s ease; }
+.notification-item:hover { background: #8f4dff24; }
+.notification-item.read { opacity: .62; }
+.notification-icon { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; border-radius: 10px; background: #7c22ff2b; color: #cbaaff; }
+.notification-icon.task_overdue, .notification-icon.member_pending { background: #ffb54720; color: #ffd08a; }
+.notification-icon.task_completed { background: #44b87826; color: #8ee6b5; }
+.notification-icon.announcement { background: #55b5ff1d; color: #94d7ff; }
+.notification-icon.event { background: #ff71651d; color: #ffaba5; }
+.notification-body { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.notification-message { color: #ece5f8; font-size: 12.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.notification-meta { color: #9789ac; font-size: 11px; }
+.notification-unread-dot { width: 8px; height: 8px; flex: 0 0 auto; margin-top: 5px; border-radius: 50%; background: #a96cff; box-shadow: 0 0 9px #a96cff; }
+
+@media (max-width: 560px) {
+    .profile-menu-trigger-text { display: none; }
+    .profile-menu-trigger { padding: 5px; }
+    .profile-menu-popover { position: fixed; top: auto; bottom: 16px; right: 12px; left: 12px; width: auto; }
+}
